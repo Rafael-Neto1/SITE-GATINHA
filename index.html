@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convite de Date</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 390px;
+            height: 844px;
+            background-color: #db2b24;
+            position: relative;
+            overflow: hidden;
+            border-radius: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            border: 8px solid #333;
+        }
+
+        /* Animação dos Corações Negros */
+        .hearts-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 35px;
+            color: #000;
+            bottom: -50px;
+            /* Alterado para linear para movimento mais fluído */
+            animation: floatUp 5s linear infinite;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        /* Opacidade mantida sempre em 1 para não ficar transparente/marrom */
+        @keyframes floatUp {
+            0% { transform: translateY(50px) scale(0.8) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-900px) scale(1.5) rotate(45deg); opacity: 1; }
+        }
+
+        /* Telas do App */
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            z-index: 2;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(100%);
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(0);
+        }
+
+        .screen.previous {
+            transform: translateX(-100%);
+        }
+
+        /* Imagens Main Sem Fundo/Quadrado */
+        .image-main {
+            width: 180px;
+            height: auto;
+            margin-bottom: 20px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            object-fit: contain;
+        }
+
+        .card {
+            background-color: rgba(90, 15, 12, 0.4);
+            backdrop-filter: blur(5px);
+            padding: 25px 20px;
+            border-radius: 20px;
+            text-align: center;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        p.subtitle {
+            font-size: 14px;
+            color: #ffcccc;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Botões Principais (Pílulas) */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            position: relative;
+            min-height: 50px;
+        }
+
+        button {
+            background-color: #ea4523; 
+            color: white;
+            border: 4px solid rgba(255, 255, 255, 0.5); 
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 50px; 
+            cursor: pointer;
+            font-weight: 900;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        button:hover:not(:disabled):not(#btn-nao) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 15px rgba(234, 69, 35, 0.4);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(2px) scale(0.95);
+        }
+
+        button.full-width {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:disabled {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        /* Botão Não Fujão */
+        #btn-nao {
+            transition: all 0.3s ease-out;
+            z-index: 100;
+        }
+
+        /* Inputs de Data e Hora */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #ffcccc;
+        }
+
+        input[type="date"], input[type="time"] {
+            background-color: rgba(0,0,0,0.2);
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        /* Grids de Opções - Estilo Vertical Igual a Imagem */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .option-item {
+            background-color: rgba(0, 0, 0, 0.35); 
+            border: 2px solid transparent;
+            border-radius: 16px; 
+            padding: 15px 5px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .option-item:hover {
+            transform: translateY(-5px) scale(1.05); 
+            background-color: rgba(0, 0, 0, 0.6); 
+            border-color: rgba(255, 255, 255, 0.3); 
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); 
+        }
+
+        .option-item.selected {
+            background-color: rgba(255, 255, 255, 0.15); 
+            border: 3px solid #ffffff; 
+            transform: translateY(-8px) scale(1.1); 
+            box-shadow: 0 12px 25px rgba(255, 255, 255, 0.4); 
+            color: #ffffff;
+        }
+
+        .option-icon {
+            font-size: 26px;
+            transition: transform 0.3s ease;
+        }
+
+        .option-item:hover .option-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .option-item.selected .option-icon {
+            transform: scale(1.2) rotate(-5deg);
+        }
+
+        /* Tela Final */
+        .summary-list {
+            text-align: left;
+            margin-top: 20px;
+            background-color: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .summary-list p {
+            margin-bottom: 10px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="hearts-container" id="hearts"></div>
+
+    <div class="screen active" id="step-1">
+        <img src="imagem1.png" alt="Por favorzinho" class="image-main">
+        <div class="card">
+            <h2>QUER IR EM UM DATE COMIGO, AMOR?</h2>
+            <div class="btn-group" id="btn-container">
+                <button id="btn-sim">SIM</button>
+                <button id="btn-nao">NÃO</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen" id="step-2">
+        <img src="imagem2.png" alt="Sabia" class="image-main">
+        <div class="card">
+            <h2>VOCÊ DISSE SIM? 🥺</h2>
+            <p class="subtitle">Sei que você não resiste a mim rsrsrs</p>
+            <button class="full-width" onclick="nextStep(3)">PRÓXIMO 🤍</button>
+        </div>
+    </div>
+
+    <div class="screen" id="step-3">
+        <div class="card">
+            <h2>🗓️ QUANDO VOCÊ TÁ LIVRE?</h2>
+            <div class="input-group">
+                <label>Escolhe a data</label>
+                <input type="date" id="date-input">
+            </div>
+            <div class="input-group">
+                <label>Escolhe o horário</label>
+                <input type="time" id="time-input" value="18:00">
+            </div>
+            <button class="full-width" onclick="saveDateTime()">ESCOLHER A DATA ☔</button>
+        </div>
+    </div>
+
+    <div class="screen" id="step-4">
+        <div class="card">
+            <h2>TÁ AFIM DE QUÊ? 😋</h2>
+            <p class="subtitle">Escolhe 2 opções</p>
+            <div class="options-grid">
+                <div class="option-item" onclick="selectOption(this, 'food', 'Hambúrguer', '🍔')"><span class="option-icon">🍔</span>Hambúrguer</div>
+                <div class="option-item" onclick="selectOption(this, 'food', 'Sushi', '🍣')"><span class="option-icon">🍣</span>Sushi</div>
+                <div class="option-item" onclick="selectOption(this, 'food', 'Massas', '🍝')"><span class="option-icon">🍝</span>Massas</div>
+                <div class="option-item" onclick="selectOption(this, 'food', 'Pizza', '🍕')"><span class="option-icon">🍕</span>Pizza</div>
+                <div class="option-item" onclick="selectOption(this, 'food', 'Eu', '😈')"><span class="option-icon">😈</span>Eu</div>
+                <div class="option-item" onclick="selectOption(this, 'food', 'Eu', '😈')"><span class="option-icon">🍷</span>Vinho</div>
+            </div>
+            <button id="btn-food" class="full-width" disabled onclick="if(!this.disabled) nextStep(5)">ESCOLHA MAIS 2 👆</button>
+        </div>
+    </div>
+
+    <div class="screen" id="step-5">
+        <div class="card">
+            <h2>VAMO ONDE? 🌟</h2>
+            <p class="subtitle">Escolhe 2 opções</p>
+            <div class="options-grid">
+                <div class="option-item" onclick="selectOption(this, 'vibe', 'Par', '🚶')"><span class="option-icon">🌳</span>Parque</div>
+                <div class="option-item" onclick="selectOption(this, 'vibe', 'Cinema', '🎬')"><span class="option-icon">🎬</span>Cinema</div>
+                <div class="option-item" onclick="selectOption(this, 'vibe', 'Dança', '💃')"><span class="option-icon">🍺</span>Bar</div>
+                <div class="option-item" onclick="selectOption(this, 'vibe', 'Parque', '🎢')"><span class="option-icon">🛝</span>Pracinha</div>
+                <div class="option-item" onclick="selectOption(this, 'vibe', 'Minha cama', '🔞')"><span class="option-icon">😈</span>Minha cama</div>
+                <div class="option-item" onclick="selectOption(this, 'vibe', 'Vinho', '🍷')"><span class="option-icon">🏨</span>Shopping</div>
+            </div>
+            <button id="btn-vibe" class="full-width" disabled onclick="finishApp()">ESCOLHA MAIS 2 👆</button>
+        </div>
+    </div>
+
+    <div class="screen" id="step-6">
+        <img src="imagem3.png" alt="Combinado" class="image-main">
+        <div class="card">
+            <h2>TÔ ANSIOSO, GATINHA 👩‍❤️‍💋‍👨</h2>
+            <p class="subtitle">Se arrume que eu te pego no dia (de uber, ok? tarada)</p>
+            
+            <div class="summary-list">
+                <p id="res-date"></p>
+                <p id="res-time"></p>
+                <p id="res-food"></p>
+                <p id="res-vibe"></p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Gerador de corações negros flutuantes
+    function createHearts() {
+        const container = document.getElementById('hearts');
+        // Quantidade aumentada de 15 para 40
+        for (let i = 0; i < 40; i++) {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '🖤';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            heart.style.animationDelay = Math.random() * 5 + 's';
+            container.appendChild(heart);
+        }
+    }
+    createHearts();
+
+    // Lógica do botão "NÃO" fujão
+    const btnNao = document.getElementById('btn-nao');
+    const msgs = ["TEM CERTEZA?", "POR FAVOR!!", "SÉRIO?", "PENSA BEM..."];
+    let msgIndex = 0;
+    let clickCount = 0;
+
+    function moveButton() {
+        if (btnNao.style.position !== 'absolute') {
+            btnNao.style.position = 'absolute';
+        }
+
+        clickCount++;
+        let scale = Math.max(0.7, 1 - (clickCount * 0.05));
+        
+        const maxW = window.innerWidth > 390 ? 250 : window.innerWidth - 150;
+        const maxH = window.innerHeight > 844 ? 500 : window.innerHeight - 250;
+        
+        const randomX = (Math.random() - 0.5) * maxW;
+        const randomY = (Math.random() - 0.5) * maxH;
+
+        btnNao.style.transform = `translate(${randomX}px, ${randomY}px) scale(${scale})`;
+        
+        btnNao.innerText = msgs[msgIndex % msgs.length];
+        msgIndex++;
+    }
+
+    btnNao.addEventListener('mouseover', moveButton);
+    btnNao.addEventListener('touchstart', (e) => {
+        e.preventDefault(); 
+        moveButton();
+    });
+
+    // Navegação de Telas
+    document.getElementById('btn-sim').addEventListener('click', () => nextStep(2));
+
+    function nextStep(step) {
+        document.querySelector('.screen.active').classList.remove('active');
+        document.getElementById(`step-${step}`).classList.add('active');
+    }
+
+    // Armazenamento de Dados para Múltiplas Escolhas
+    const dateData = { 
+        date: '', 
+        time: '', 
+        food: [], 
+        vibe: [] 
+    };
+
+    function saveDateTime() {
+        const rawDate = document.getElementById('date-input').value;
+        const time = document.getElementById('time-input').value;
+        
+        if(rawDate) {
+            const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+            const [ano, mes, dia] = rawDate.split('-');
+            dateData.date = `${dia} de ${meses[parseInt(mes) - 1]} de ${ano}`;
+        } else {
+            dateData.date = "Em breve";
+        }
+        dateData.time = time;
+        nextStep(4);
+    }
+
+    // Lógica Flexível de Múltipla Escolha (Exatamente 2 Opções)
+    function selectOption(element, category, name, icon) {
+        const targetArray = category === 'food' ? dateData.food : dateData.vibe;
+        const btnId = category === 'food' ? 'btn-food' : 'btn-vibe';
+        const btn = document.getElementById(btnId);
+
+        const existingIndex = targetArray.findIndex(item => item.name === name);
+        
+        if (existingIndex !== -1) {
+            // Remove se já estava selecionado
+            targetArray.splice(existingIndex, 1);
+            element.classList.remove('selected');
+        } else {
+            // Se já tiver 2 selecionados, remove o mais antigo antes de adicionar o novo
+            if (targetArray.length >= 2) {
+                const removedItem = targetArray.shift();
+                const siblings = element.parentElement.children;
+                for(let el of siblings) {
+                    if(el.innerText.includes(removedItem.name)) {
+                        el.classList.remove('selected'); 
+                    }
+                }
+            }
+            // Adiciona o novo
+            targetArray.push({ name, icon });
+            element.classList.add('selected');
+        }
+
+        // Atualiza o botão
+        if (targetArray.length === 2) {
+            btn.disabled = false;
+            btn.innerText = "BORA! 🏃";
+        } else {
+            btn.disabled = true;
+            btn.innerText = `ESCOLHA MAIS ${2 - targetArray.length} 👆`;
+        }
+    }
+
+    function finishApp() {
+        // Formata os arrays com ícone e nome (ex: 🍔 Hambúrguer e 🍣 Sushi)
+        const foodsText = dateData.food.map(f => `${f.icon} ${f.name}`).join(' e ');
+        const vibesText = dateData.vibe.map(v => `${v.icon} ${v.name}`).join(' e ');
+
+        document.getElementById('res-date').innerHTML = `🗓️ ${dateData.date}`;
+        document.getElementById('res-time').innerHTML = `⏰ ${dateData.time}`;
+        document.getElementById('res-food').innerHTML = `🍽️ ${foodsText}`;
+        document.getElementById('res-vibe').innerHTML = `✨ ${vibesText}`;
+        
+        nextStep(6);
+    }
+</script>
+</body>
+</html>
